@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulador de Receita — Justiça.iDoc</title>
+<style>
+:root{
+  --navy:#0f2a4a; --navy-2:#1d4270; --bg:#f4f6fa; --card:#ffffff; --text:#14213a; --muted:#5b6b82;
+  --line:#dde3ec; --pess:#c7861b; --real:#1d5fa8; --otim:#1a8a6e; --soft:#eef2f8;
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#0b1422; --card:#12203a; --text:#e6ecf5; --muted:#9aabc4; --line:#24375a; --soft:#182a48; --navy:#0a1d36;}
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.45}
+header{background:var(--navy);color:#fff;padding:28px 16px}
+header .wrap{max-width:1180px;margin:0 auto}
+header h1{margin:0 0 6px;font-size:1.6rem}
+header p{margin:0;opacity:.85;font-size:.95rem}
+main{max-width:1180px;margin:0 auto;padding:20px 16px 48px}
+h2{font-size:1.1rem;margin:28px 0 12px;color:var(--text)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px}
+.grid{display:grid;gap:14px}
+.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+label{display:block;font-size:.8rem;color:var(--muted);margin-bottom:4px}
+input[type=number]{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:8px;font-size:1rem;background:var(--soft);color:var(--text)}
+input[type=number]:focus{outline:2px solid var(--navy-2);border-color:transparent}
+.hint{font-size:.72rem;color:var(--muted);margin-top:3px}
+.scen{border-top:5px solid var(--c)}
+.scen h3{margin:0 0 12px;color:var(--c);font-size:1.05rem;display:flex;justify-content:space-between;align-items:center}
+.scen .inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.kpi{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--line);font-size:.9rem}
+.kpi:last-child{border-bottom:none}
+.kpi b{font-variant-numeric:tabular-nums}
+.big{background:var(--soft);border-radius:10px;padding:12px;margin-bottom:10px;text-align:center}
+.big .v{font-size:1.9rem;font-weight:700;color:var(--c)}
+.big .l{font-size:.78rem;color:var(--muted)}
+.warn{font-size:.78rem;color:var(--pess);margin-top:8px;min-height:1em}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.tabs button,.actions button{border:1px solid var(--line);background:var(--card);color:var(--text);padding:7px 14px;border-radius:999px;cursor:pointer;font-size:.85rem}
+.tabs button.on{background:var(--navy-2);color:#fff;border-color:var(--navy-2)}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.85rem;font-variant-numeric:tabular-nums}
+th,td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.03em}
+tfoot td{font-weight:700;border-top:2px solid var(--line)}
+.legend{display:flex;gap:16px;font-size:.8rem;color:var(--muted);flex-wrap:wrap;margin-bottom:6px}
+.legend span::before{content:"";display:inline-block;width:12px;height:3px;margin-right:6px;vertical-align:middle;background:var(--c)}
+svg text{fill:var(--muted);font-size:11px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.notes{width:100%;min-height:80px;border:1px solid var(--line);border-radius:8px;padding:10px;background:var(--soft);color:var(--text);font:inherit}
+.method{font-size:.85rem;color:var(--muted)}
+@media print{.actions,.tabs{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <h1 contenteditable="true">Simulador de Receita — Justiça.iDoc</h1>
+  <p contenteditable="true">Quantos assinantes, cadastros e investimento são necessários para atingir a meta anual. Edite qualquer campo e os números se atualizam.</p>
+</div></header>
+
+<main>
+<h2>Premissas gerais</h2>
+<div class="card grid g4">
+  <div><label>Meta de receita no período (R$)</label><input type="number" id="meta" value="600000" step="10000"></div>
+  <div><label>Ticket médio mensal (R$)</label><input type="number" id="ticket" value="99" step="1"></div>
+  <div><label>Margem de contribuição (%)</label><input type="number" id="margem" value="70" step="1"></div>
+  <div><label>Período (meses)</label><input type="number" id="meses" value="12" min="1" max="36" step="1"></div>
+  <div><label>Base pagante inicial (assinantes)</label><input type="number" id="base0" value="0" step="10"><div class="hint">Assinantes já ativos no mês 0</div></div>
+  <div><label>LTV/CAC alvo (x)</label><input type="number" id="ltvcac" value="3" step="0.5"><div class="hint">Define o CAC máximo aceitável</div></div>
+</div>
+
+<h2>Cenários</h2>
+<div class="grid g3" id="scenarios"></div>
+
+<h2>Evolução do MRR</h2>
+<div class="card">
+  <div class="legend">
+    <span style="--c:var(--pess)">Pessimista</span>
+    <span style="--c:var(--real)">Realista</span>
+    <span style="--c:var(--otim)">Otimista</span>
+  </div>
+  <svg id="chart" viewBox="0 0 900 300" width="100%" preserveAspectRatio="none" role="img" aria-label="MRR mensal por cenário"></svg>
+</div>
+
+<h2>Detalhamento mês a mês</h2>
+<div class="card">
+  <div class="tabs" id="tabs"></div>
+  <div class="table-wrap"><table id="tbl"></table></div>
+  <div class="actions">
+    <button id="csv">Exportar CSV do cenário</button>
+    <button onclick="window.print()">Imprimir / salvar PDF</button>
+    <button id="reset">Restaurar valores padrão</button>
+  </div>
+</div>
+
+<h2>Anotações</h2>
+<textarea class="notes" placeholder="Premissas validadas com o cliente, próximos passos..."></textarea>
+
+<h2>Como o cálculo funciona</h2>
+<div class="card method">
+  <p>Base do mês = base do mês anterior × (1 − churn) + novos pagantes do mês. Receita do mês = base × ticket. Os novos pagantes crescem pela taxa de rampa mensal (ex.: 5% = cada mês adquire 5% mais que o anterior).</p>
+  <p>O simulador calcula quantos novos pagantes são necessários no mês 1 para que a soma da receita no período alcance a meta. A partir daí, desce o funil: cadastros freemium = novos pagantes ÷ conversão free→pago; visitantes = cadastros ÷ conversão visitante→cadastro.</p>
+  <p>LTV em margem = ticket × margem ÷ churn. CAC máximo = LTV ÷ LTV/CAC alvo. Investimento = novos pagantes × CAC máximo (teto de investimento em aquisição, não previsão de gasto). Payback = CAC ÷ margem mensal por assinante.</p>
+</div>
+</main>
+
+<script>
+const DEFAULTS = {
+  global:{meta:600000,ticket:99,margem:70,meses:12,base0:0,ltvcac:3},
+  scen:[
+    {key:'pess',name:'Pessimista',color:'var(--pess)',churn:10,free:3,visit:3,ramp:5},
+    {key:'real',name:'Realista',color:'var(--real)',churn:8.3,free:4,visit:4,ramp:5},
+    {key:'otim',name:'Otimista',color:'var(--otim)',churn:6.5,free:6,visit:5,ramp:5}
+  ]
+};
+const FIELDS = [
+  ['churn','Churn mensal (%)',0.1],
+  ['free','Conversão free→pago (%)',0.5],
+  ['visit','Conversão visitante→cadastro (%)',0.5],
+  ['ramp','Rampa de aquisição (% a.m.)',1]
+];
+let selected = 'real';
+let results = {};
+
+const brl = v => v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const num = (v,d=0) => v.toLocaleString('pt-BR',{maximumFractionDigits:d,minimumFractionDigits:d});
+const val = id => parseFloat(document.getElementById(id).value) || 0;
+
+function buildScenarios(){
+  const box = document.getElementById('scenarios');
+  box.innerHTML = DEFAULTS.scen.map(s => `
+    <div class="card scen" style="--c:${s.color}">
+      <h3>${s.name}</h3>
+      <div class="inputs">
+        ${FIELDS.map(([f,l,st]) => `<div><label>${l}</label><input type="number" id="${s.key}_${f}" value="${s[f]}" step="${st}"></div>`).join('')}
+      </div>
+      <div class="big"><div class="v" id="${s.key}_n1">–</div><div class="l">novos pagantes necessários no mês 1</div></div>
+      <div id="${s.key}_kpis"></div>
+      <div class="warn" id="${s.key}_warn"></div>
+    </div>`).join('');
+  document.getElementById('tabs').innerHTML = DEFAULTS.scen.map(s =>
+    `<button data-k="${s.key}" class="${s.key===selected?'on':''}">${s.name}</button>`).join('');
+}
+
+function simulate(n1, base0, churn, ramp, months, ticket){
+  const rows = []; let base = base0; let total = 0;
+  for(let t=1;t<=months;t++){
+    const novos = n1*Math.pow(1+ramp,t-1);
+    const perdidos = base*churn;
+    base = base - perdidos + novos;
+    const rec = base*ticket; total += rec;
+    rows.push({t,novos,perdidos,base,rec,acum:total});
+  }
+  return {rows,total};
+}
+
+function compute(){
+  const g = {meta:val('meta'),ticket:val('ticket'),margem:val('margem')/100,
+             meses:Math.max(1,Math.min(36,Math.round(val('meses')))),base0:val('base0'),ltvcac:val('ltvcac')||1};
+  DEFAULTS.scen.forEach(s => {
+    const churn = val(s.key+'_churn')/100, free = val(s.key+'_free')/100,
+          visit = val(s.key+'_visit')/100, ramp = val(s.key+'_ramp')/100;
+    const r0 = simulate(0,g.base0,churn,ramp,g.meses,g.ticket).total;
+    const k  = simulate(1,0,churn,ramp,g.meses,g.ticket).total;
+    let n1 = k>0 ? (g.meta - r0)/k : 0;
+    const metaBatida = n1 <= 0; n1 = Math.max(0,n1);
+    const sim = simulate(n1,g.base0,churn,ramp,g.meses,g.ticket);
+    const margemMes = g.ticket*g.margem;
+    const ltv = churn>0 ? margemMes/churn : Infinity;
+    const cac = isFinite(ltv) ? ltv/g.ltvcac : 0;
+    sim.rows.forEach(r => {
+      r.cad = free>0 ? r.novos/free : 0;
+      r.vis = visit>0 ? r.cad/visit : 0;
+      r.inv = r.novos*cac;
+    });
+    const totNovos = sim.rows.reduce((a,r)=>a+r.novos,0);
+    const totInv = sim.rows.reduce((a,r)=>a+r.inv,0);
+    const last = sim.rows[sim.rows.length-1];
+    results[s.key] = {...sim,n1,ltv,cac,totNovos,totInv,last,margemMes,metaBatida,free,visit};
+
+    document.getElementById(s.key+'_n1').textContent = num(Math.ceil(n1));
+    const avgCad = sim.rows.reduce((a,r)=>a+r.cad,0)/g.meses;
+    const avgVis = sim.rows.reduce((a,r)=>a+r.vis,0)/g.meses;
+    const kp = [
+      [`Novos pagantes no mês ${g.meses}`, num(Math.ceil(last.novos))],
+      ['Novos pagantes no período', num(Math.round(totNovos))],
+      ['Cadastros freemium / mês (média)', num(Math.round(avgCad))],
+      ['Visitantes / mês (média)', num(Math.round(avgVis))],
+      [`Base pagante no mês ${g.meses}`, num(Math.round(last.base))],
+      [`MRR no mês ${g.meses}`, brl(last.rec)],
+      ['Receita no período', brl(sim.total)],
+      ['LTV em margem', isFinite(ltv)?brl(ltv):'—'],
+      ['CAC máximo', brl(cac)],
+      ['Investimento máx. em aquisição / mês (média)', brl(totInv/g.meses)],
+      ['Investimento máx. no período', brl(totInv)],
+      ['Payback do CAC', margemMes>0 ? num(cac/margemMes,1)+' meses' : '—']
+    ];
+    document.getElementById(s.key+'_kpis').innerHTML = kp.map(([l,v])=>`<div class="kpi"><span>${l}</span><b>${v}</b></div>`).join('');
+    const w = [];
+    if(metaBatida) w.push('A base inicial já cobre a meta sem novas aquisições.');
+    if(free===0||visit===0) w.push('Conversões zeradas: funil não calculado.');
+    if(churn===0) w.push('Churn zero: LTV indefinido.');
+    document.getElementById(s.key+'_warn').textContent = w.join(' ');
+  });
+  drawChart(g.meses); drawTable();
+}
+
+function drawChart(months){
+  const svg = document.getElementById('chart'); const W=900,H=300,P={l:70,r:15,t:15,b:30};
+  const all = DEFAULTS.scen.flatMap(s=>results[s.key].rows.map(r=>r.rec));
+  const max = Math.max(1,...all)*1.1;
+  const x = t => P.l + (months===1?0:(t-1)/(months-1))*(W-P.l-P.r);
+  const y = v => H-P.b - v/max*(H-P.t-P.b);
+  let out = '';
+  for(let i=0;i<=4;i++){
+    const v = max*i/4, yy=y(v);
+    out += `<line x1="${P.l}" x2="${W-P.r}" y1="${yy}" y2="${yy}" stroke="var(--line)"/>`;
+    out += `<text x="${P.l-8}" y="${yy+4}" text-anchor="end">${brl(v)}</text>`;
+  }
+  const step = Math.ceil(months/12);
+  for(let t=1;t<=months;t+=step) out += `<text x="${x(t)}" y="${H-8}" text-anchor="middle">M${t}</text>`;
+  DEFAULTS.scen.forEach(s=>{
+    const pts = results[s.key].rows.map(r=>`${x(r.t)},${y(r.rec)}`).join(' ');
+    out += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="${s.key===selected?3.5:2}" stroke-linejoin="round"/>`;
+  });
+  svg.innerHTML = out;
+}
+
+function drawTable(){
+  const r = results[selected];
+  const head = ['Mês','Visitantes','Cadastros free','Novos pagantes','Cancelamentos','Base pagante','Receita do mês','Receita acumulada','Invest. máx. aquisição'];
+  let h = `<thead><tr>${head.map(x=>`<th>${x}</th>`).join('')}</tr></thead><tbody>`;
+  r.rows.forEach(x=>{
+    h += `<tr><td>M${x.t}</td><td>${num(Math.round(x.vis))}</td><td>${num(Math.round(x.cad))}</td><td>${num(Math.ceil(x.novos))}</td><td>${num(Math.round(x.perdidos))}</td><td>${num(Math.round(x.base))}</td><td>${brl(x.rec)}</td><td>${brl(x.acum)}</td><td>${brl(x.inv)}</td></tr>`;
+  });
+  const sum = k => r.rows.reduce((a,x)=>a+x[k],0);
+  h += `</tbody><tfoot><tr><td>Total</td><td>${num(Math.round(sum('vis')))}</td><td>${num(Math.round(sum('cad')))}</td><td>${num(Math.round(sum('novos')))}</td><td>${num(Math.round(sum('perdidos')))}</td><td>—</td><td>${brl(r.total)}</td><td>—</td><td>${brl(sum('inv'))}</td></tr></tfoot>`;
+  document.getElementById('tbl').innerHTML = h;
+}
+
+function exportCSV(){
+  const r = results[selected];
+  const lines = [['Mes','Visitantes','Cadastros','NovosPagantes','Cancelamentos','Base','Receita','ReceitaAcumulada','InvestMaxAquisicao'].join(';')];
+  r.rows.forEach(x=>lines.push([x.t,x.vis,x.cad,x.novos,x.perdidos,x.base,x.rec,x.acum,x.inv].map(v=>typeof v==='number'?v.toFixed(2).replace('.',','):v).join(';')));
+  const blob = new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `simulacao-${selected}.csv`; a.click();
+}
+
+function reset(){
+  Object.entries(DEFAULTS.global).forEach(([k,v])=>document.getElementById(k).value=v);
+  DEFAULTS.scen.forEach(s=>FIELDS.forEach(([f])=>document.getElementById(`${s.key}_${f}`).value=s[f]));
+  compute();
+}
+
+buildScenarios();
+document.addEventListener('input', e => { if(e.target.matches('input[type=number]')) compute(); });
+document.getElementById('tabs').addEventListener('click', e => {
+  const k = e.target.dataset.k; if(!k) return; selected = k;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.k===k));
+  drawChart(Math.max(1,Math.min(36,Math.round(val('meses'))))); drawTable();
+});
+document.getElementById('csv').addEventListener('click', exportCSV);
+document.getElementById('reset').addEventListener('click', reset);
+compute();
+</script>
+</body>
+</html>
